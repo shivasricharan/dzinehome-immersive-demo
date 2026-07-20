@@ -184,6 +184,8 @@ p { line-height: 1.65; }
 .showcase-card div { display: flex; justify-content: space-between; align-items: baseline; gap: 25px; margin-top: 18px; }
 .showcase-card span { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; opacity: .55; }
 .showcase-card h3 { font-size: 1.2rem; letter-spacing: -.02em; }
+.showcase-card > a { display: inline-flex; margin-top: 14px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,.42); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+.showcase-card > a:hover { color: white; border-color: white; }
 
 .rest-section { display: grid; grid-template-columns: 1.35fr .65fr; min-height: 100vh; }
 .rest-media { overflow: hidden; min-height: 100vh; }
@@ -204,6 +206,7 @@ p { line-height: 1.65; }
 .consultation-media { min-height: 100vh; overflow: hidden; }
 .consultation-media img { height: 100%; object-fit: cover; }
 .consultation-panel { display: flex; flex-direction: column; justify-content: center; padding: 8vw 6vw; }
+.consultation-panel { position: relative; z-index: 1; background: #11110f; }
 .consultation-panel h2 { font-size: clamp(2.8rem, 5vw, 6rem); }
 .consultation-panel > p:last-of-type { max-width: 520px; color: rgba(255,255,255,.7); margin: 28px 0; }
 .consultation-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 620px; }

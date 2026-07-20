@@ -16,7 +16,12 @@ const images = {
   bion1: 'https://dzinehome.in/wp-content/uploads/2024/08/84-720x720.jpg',
   bion2: 'https://dzinehome.in/wp-content/uploads/2024/08/86-720x720.jpg',
   villa1: 'https://dzinehome.in/wp-content/uploads/2024/09/76.png',
-  villa2: 'https://dzinehome.in/wp-content/uploads/2024/09/67.png'
+  villa2: 'https://dzinehome.in/wp-content/uploads/2024/09/67.png',
+  tridasa1: 'https://dzinehome.in/wp-content/uploads/2024/11/105.png',
+  tridasa2: 'https://dzinehome.in/wp-content/uploads/2024/11/112.png',
+  bionLarge: 'https://dzinehome.in/wp-content/uploads/2024/08/17.jpg',
+  estella: 'https://dzinehome.in/wp-content/uploads/2024/08/51.jpg',
+  orange: 'https://dzinehome.in/wp-content/uploads/2024/11/145.png'
 };
 
 const styleOptions = {
@@ -164,15 +169,38 @@ app.innerHTML = `
         </article>
         <article class="showcase-card">
           <img src="${images.bion1}" alt="Elegant Bollineni Bion residence interior" />
-          <div><span>Elegant</span><h3>210 Bollineni Bion Residence</h3></div>
+          <div><span>Elegant apartment</span><h3>210 Bollineni Bion Residence</h3></div>
+          <a href="https://dzinehome.in/portfolio/210-bollineni-bion-residence/" target="_blank" rel="noreferrer">View project ↗</a>
         </article>
         <article class="showcase-card">
-          <img src="${images.bion2}" alt="Bollineni Bion interior detail" />
-          <div><span>Crafted detail</span><h3>A harmony of comfort and luxury</h3></div>
+          <img src="${images.tridasa1}" alt="My Home Tridasa residence interior" />
+          <div><span>Contemporary 3BHK</span><h3>2906 My Home Tridasa</h3></div>
+          <a href="https://dzinehome.in/portfolio/2906-my-home-tridasa/" target="_blank" rel="noreferrer">View project ↗</a>
+        </article>
+        <article class="showcase-card wide">
+          <img src="${images.bionLarge}" alt="Woody Bollineni Bion residence interior" />
+          <div><span>Warm and woody</span><h3>2412 Bollineni Bion Residence</h3></div>
+          <a href="https://dzinehome.in/portfolio/2412-bollineni-bion-residence/" target="_blank" rel="noreferrer">View project ↗</a>
         </article>
         <article class="showcase-card wide">
           <img src="${images.villa1}" alt="Modern Warangal villa interior" />
           <div><span>Modern Villa</span><h3>Warangal Villa</h3></div>
+          <a href="https://dzinehome.in/portfolio/warangal-villa/" target="_blank" rel="noreferrer">View project ↗</a>
+        </article>
+        <article class="showcase-card">
+          <img src="${images.estella}" alt="Orange Estella residence interior" />
+          <div><span>Urban residence</span><h3>1510 Orange Estella</h3></div>
+          <a href="https://dzinehome.in/portfolio/1510-orange-estella-residence/" target="_blank" rel="noreferrer">View project ↗</a>
+        </article>
+        <article class="showcase-card">
+          <img src="${images.orange}" alt="Orange Aurtha residence interior" />
+          <div><span>Personal expression</span><h3>101 Orange Aurtha Residence</h3></div>
+          <a href="https://dzinehome.in/portfolio/101-orange-aurtha-residence/" target="_blank" rel="noreferrer">View project ↗</a>
+        </article>
+        <article class="showcase-card wide">
+          <img src="${images.tridasa2}" alt="My Home Tridasa interior detail" />
+          <div><span>Room by room</span><h3>Inside My Home Tridasa</h3></div>
+          <a href="https://dzinehome.in/portfolio/2906-my-home-tridasa/" target="_blank" rel="noreferrer">View project ↗</a>
         </article>
       </div>
     </section>
@@ -210,7 +238,7 @@ app.innerHTML = `
 
     <section id="consultation" class="consultation section-dark">
       <div class="consultation-media"><img src="${images.villa2}" alt="Dzinehome villa interior" /></div>
-      <div class="consultation-panel reveal">
+      <div class="consultation-panel">
         <p class="section-label">Your home story starts here</p>
         <h2>Tell us what you are imagining.</h2>
         <p>Share a few details and create a useful starting brief for the first design conversation.</p>
@@ -380,10 +408,19 @@ consultationForm?.addEventListener('submit', (event) => {
 
 document.addEventListener('click', (event) => {
   const trigger = event.target.closest('[data-open-consultation]');
-  if (!trigger) return;
+  if (trigger) {
+    event.preventDefault();
+    history.replaceState(null, '', '#consultation');
+    lenis.scrollTo('#consultation', { duration: 1.1, offset: 0 });
+    window.setTimeout(() => document.querySelector('#consultation-form input')?.focus({ preventScroll: true }), 700);
+    return;
+  }
+
+  const anchor = event.target.closest('a[href^="#"]');
+  if (!anchor || !document.querySelector(anchor.hash)) return;
   event.preventDefault();
-  document.querySelector('#consultation-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  window.setTimeout(() => document.querySelector('#consultation-form input')?.focus({ preventScroll: true }), 700);
+  history.replaceState(null, '', anchor.hash);
+  lenis.scrollTo(anchor.hash, { duration: 1.05, offset: anchor.hash === '#top' ? 0 : -64 });
 });
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');

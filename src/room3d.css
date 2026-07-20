@@ -8,7 +8,7 @@
 .room-shell {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(360px, 0.96fr);
-  grid-template-areas: "stage panel" "refs panel";
+  grid-template-areas: "stage panel" "refs refs";
   max-width: 1600px;
   min-height: 88vh;
   margin: auto;
@@ -150,6 +150,7 @@
   text-transform: uppercase;
   backdrop-filter: blur(10px);
   cursor: pointer;
+  text-decoration: none;
 }
 .room-panel {
   grid-area: panel;
@@ -282,42 +283,78 @@
 .room-reference {
   grid-area: refs;
   display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 18px;
-  padding: 18px;
+  grid-template-columns: minmax(240px, .55fr) minmax(0, 1.45fr);
+  gap: clamp(28px, 5vw, 80px);
+  padding: clamp(34px, 5vw, 76px);
   border-top: 1px solid rgba(255, 255, 255, 0.17);
   background: #11120f;
 }
-.reference-note {
-  align-self: center;
-  padding-left: 8px;
+.reference-intro {
+  align-self: start;
+  position: sticky;
+  top: 110px;
 }
-.reference-note span {
+.reference-intro > span {
   font-size: 0.64rem;
   letter-spacing: 0.13em;
   text-transform: uppercase;
+  color: #c6b980;
 }
-.reference-note p {
-  margin: 9px 0 0;
+.reference-intro h3 {
+  margin: 18px 0;
+  max-width: 430px;
+  font-family: "Manrope", sans-serif;
+  font-size: clamp(2.1rem, 3.2vw, 4rem);
+  line-height: 1.02;
+  letter-spacing: -.045em;
+}
+.reference-intro p {
+  max-width: 430px;
+  margin: 0;
   color: rgba(255, 255, 255, 0.5);
-  font-size: 0.78rem;
-  line-height: 1.5;
 }
+.reference-viewer { min-width: 0; }
+.reference-main {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: min(68vh, 760px);
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #080806;
+  color: white;
+  cursor: zoom-in;
+}
+.reference-main img { width: 100%; height: 100%; object-fit: cover; transition: opacity .25s ease, transform .65s ease; }
+.reference-main:hover img { transform: scale(1.018); }
+.reference-main span { position: absolute; right: 16px; bottom: 16px; padding: 9px 12px; background: rgba(0,0,0,.66); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; }
+.reference-caption { display: flex; justify-content: space-between; gap: 24px; padding: 17px 0 20px; }
+.reference-caption strong { font-weight: 500; }
+.reference-caption b { font-size: .72rem; font-weight: 500; color: rgba(255,255,255,.52); }
+.reference-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+.reference-actions button { min-width: 120px; padding: 12px 15px; border: 1px solid rgba(255,255,255,.22); background: transparent; color: white; cursor: pointer; }
+.reference-actions button + button { border-left: 0; }
+.reference-actions button:hover { background: white; color: #11120f; }
 .reference-filmstrip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(6, minmax(90px, 1fr));
+  gap: 9px;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 .reference-filmstrip button {
   position: relative;
-  min-height: 120px;
-  border: 0;
+  min-width: 90px;
+  min-height: 98px;
+  border: 1px solid transparent;
   padding: 0;
   overflow: hidden;
   background: #191915;
   color: white;
-  cursor: zoom-in;
+  cursor: pointer;
 }
+.reference-filmstrip button.active { border-color: #e2bd84; }
 .reference-filmstrip img {
   height: 100%;
   object-fit: cover;
@@ -326,7 +363,7 @@
 .reference-filmstrip button:hover img { transform: scale(1.035); }
 .reference-filmstrip button > span {
   position: absolute;
-  right: 6px;
+  left: 6px;
   bottom: 6px;
   padding: 4px 6px;
   background: rgba(0, 0, 0, 0.56);
@@ -394,9 +431,8 @@
   .room-stage {
     min-height: 62vh;
   }
-  .room-reference {
-    grid-template-columns: 140px 1fr;
-  }
+  .room-reference { grid-template-columns: 1fr; }
+  .reference-intro { position: static; }
   .room-panel {
     padding: 34px 28px;
   }
@@ -412,6 +448,8 @@
     grid-template-columns: 1fr;
     grid-template-areas: "stage" "panel" "refs";
   }
+  .room-reference { grid-template-columns: 1fr; }
+  .reference-main { height: 58svh; }
   .room-stage {
     min-height: 62svh;
   }
