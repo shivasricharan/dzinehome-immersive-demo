@@ -2,291 +2,146 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import './room3d.css';
 
-const materialSets = {
-  warm: {
-    wall: 0xd8c9b5,
-    floor: 0x6f4f3a,
-    sofa: 0xc4aa8a,
-    accent: 0x7a5036,
-    metal: 0xb88a52
-  },
-  minimal: {
-    wall: 0xe7e4dd,
-    floor: 0x9c9387,
-    sofa: 0xcfcac1,
-    accent: 0x56514a,
-    metal: 0x8f8a82
-  },
-  luxe: {
-    wall: 0xb9aa99,
-    floor: 0x3b312b,
-    sofa: 0x63564c,
-    accent: 0x2d2622,
-    metal: 0xc5a56d
-  }
+const views = {
+  living: { camera: [7.7, 4.3, 9.3], target: [0, 1.45, -.25], copy: 'Living room · layered timber, linen and warm terracotta.' },
+  dining: { camera: [5.2, 3.6, 3.9], target: [1.2, 1.35, -2.7], copy: 'Dining · a warm gathering space framed by brick and pendant light.' },
+  material: { camera: [-5.4, 3.1, 4.9], target: [-3.2, 1.7, -3.7], copy: 'Material story · timber grain, linen texture and grounded earth tones.' }
 };
 
 export function initRoomExperience() {
   const stage = document.querySelector('#room-stage');
   if (!stage) return;
-
   const fallback = stage.querySelector('.room-fallback');
   const loader = stage.querySelector('.room-loader');
   const status = document.querySelector('#room-status');
-  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const progress = document.querySelector('#tour-progress');
+  const count = document.querySelector('#tour-count');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const compact = matchMedia('(max-width: 900px), (pointer: coarse)').matches;
 
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: !compact, alpha: false, powerPreference: compact ? 'default' : 'high-performance' });
   } catch (error) {
-    fallback?.classList.add('visible');
-    loader?.classList.add('ready');
-    return;
+    fallback?.classList.add('visible'); loader?.classList.add('ready'); return;
   }
-
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, compact ? 1.15 : 1.6));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !compact;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
+  renderer.domElement.setAttribute('aria-hidden', 'true');
   stage.prepend(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x151511, 12, 24);
-
-  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 60);
-  camera.position.set(7.6, 5.1, 9.2);
-
+  scene.background = new THREE.Color(0x28241d);
+  scene.fog = new THREE.Fog(0x28241d, 13, 25);
+  const camera = new THREE.PerspectiveCamera(38, 1, .1, 50);
+  camera.position.fromArray(views.living.camera);
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 1.55, 0);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.065;
-  controls.enablePan = false;
-  controls.minDistance = 6.5;
-  controls.maxDistance = 12.5;
-  controls.minPolarAngle = Math.PI * 0.24;
-  controls.maxPolarAngle = Math.PI * 0.48;
-  controls.minAzimuthAngle = -Math.PI * 0.28;
-  controls.maxAzimuthAngle = Math.PI * 0.28;
-  controls.autoRotate = !motionQuery.matches;
-  controls.autoRotateSpeed = 0.32;
+  controls.target.fromArray(views.living.target);
+  controls.enableDamping = true; controls.dampingFactor = .07; controls.enablePan = false;
+  controls.minDistance = 5.8; controls.maxDistance = 12;
+  controls.minPolarAngle = Math.PI * .25; controls.maxPolarAngle = Math.PI * .49;
+  controls.minAzimuthAngle = -Math.PI * .34; controls.maxAzimuthAngle = Math.PI * .34;
 
+  const mat = (color, roughness=.8, metalness=0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
   const materials = {
-    wall: new THREE.MeshStandardMaterial({ color: materialSets.warm.wall, roughness: 0.95 }),
-    floor: new THREE.MeshStandardMaterial({ color: materialSets.warm.floor, roughness: 0.62, metalness: 0.04 }),
-    sofa: new THREE.MeshStandardMaterial({ color: materialSets.warm.sofa, roughness: 0.88 }),
-    accent: new THREE.MeshStandardMaterial({ color: materialSets.warm.accent, roughness: 0.74 }),
-    metal: new THREE.MeshStandardMaterial({ color: materialSets.warm.metal, roughness: 0.28, metalness: 0.72 }),
-    glass: new THREE.MeshPhysicalMaterial({ color: 0xdde8eb, transparent: true, opacity: 0.28, roughness: 0.08, transmission: 0.72 }),
-    fabric: new THREE.MeshStandardMaterial({ color: 0xe3d7c4, roughness: 1 }),
-    green: new THREE.MeshStandardMaterial({ color: 0x526046, roughness: 0.9 })
+    plaster: mat(0x93836f,.98), timber: mat(0x3c271b,.62), timber2: mat(0x211711,.7), brick: mat(0x713d2c,.96),
+    floor: mat(0x756655,.66), linen: mat(0xc3ad8c,1), olive: mat(0x484b31,.9), black: mat(0x171713,.34,.28),
+    brass: mat(0xa67b43,.28,.72), rug: mat(0x8d7c64,1), leaf: mat(0x485b36,.92), ceramic: mat(0x8c6d52,.75)
   };
-
-  const room = new THREE.Group();
-  scene.add(room);
-
-  function box(name, size, position, material, rotation = [0, 0, 0], radius = 0) {
-    const geometry = radius > 0
-      ? new THREE.BoxGeometry(size[0], size[1], size[2], 4, 4, 4)
-      : new THREE.BoxGeometry(...size);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = name;
-    mesh.position.set(...position);
-    mesh.rotation.set(...rotation);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    room.add(mesh);
-    return mesh;
+  const room = new THREE.Group(); scene.add(room);
+  function box(size, pos, material, rotation=[0,0,0], parent=room) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
+    mesh.position.set(...pos); mesh.rotation.set(...rotation); mesh.castShadow=!compact; mesh.receiveShadow=!compact; parent.add(mesh); return mesh;
+  }
+  function cylinder(radius, height, pos, material, sides=compact?16:28, parent=room) {
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,sides),material);
+    mesh.position.set(...pos); mesh.castShadow=!compact; mesh.receiveShadow=!compact; parent.add(mesh); return mesh;
   }
 
-  box('floor', [10, 0.18, 8], [0, -0.1, 0], materials.floor);
-  box('back-wall', [10, 5.8, 0.18], [0, 2.8, -4], materials.wall);
-  box('side-wall', [0.18, 5.8, 8], [-5, 2.8, 0], materials.wall);
-  box('ceiling-beam', [10, 0.18, 0.5], [0, 5.65, -3.75], materials.accent);
+  // Architectural shell and a layered, earthy material story inspired by the project imagery.
+  box([11,.18,8.5],[0,-.1,0],materials.floor);
+  box([11,5.9,.18],[0,2.85,-4.2],materials.plaster);
+  box([.18,5.9,8.5],[-5.5,2.85,0],materials.timber2);
+  box([11,.15,1.1],[0,5.7,-3.7],materials.timber2);
+  box([7.2,.12,4.6],[.3,5.45,-.8],materials.plaster);
+  // Timber wall panel rhythm.
+  for(let x=-5.25;x<-1.85;x+=.48) box([.42,4.7,.13],[x,2.42,-4.02],materials.timber);
+  // Terracotta feature wall made from lightweight courses.
+  for(let y=.22;y<4.7;y+=.29){
+    const offset=(Math.round(y*10)%2)*.22;
+    for(let x=-1.5+offset;x<3.1;x+=.47) box([.42,.22,.1],[x,y,-4],materials.brick);
+  }
+  // Large glazed opening and black mullions.
+  const glassMat=new THREE.MeshPhysicalMaterial({color:0xb9ced1,transparent:true,opacity:.28,roughness:.1,transmission:.55});
+  box([3.05,4.7,.06],[4.05,2.45,-4.03],glassMat);
+  for(const x of [2.55,3.55,4.55,5.53]) box([.055,4.75,.11],[x,2.45,-3.96],materials.black);
+  box([3.1,.07,.11],[4.04,.2,-3.96],materials.black);
 
-  const windowFrame = box('window-frame', [4.2, 3.35, 0.12], [2.35, 3.05, -3.88], materials.accent);
-  const glass = box('window-glass', [3.72, 2.87, 0.08], [2.35, 3.05, -3.8], materials.glass);
-  box('window-mullion-v', [0.08, 2.9, 0.14], [2.35, 3.05, -3.72], materials.metal);
-  box('window-mullion-h', [3.75, 0.08, 0.14], [2.35, 3.05, -3.72], materials.metal);
+  // Living room: low sectional, cushions, rug and sculptural table.
+  box([5.15,.07,3.55],[-.75,.04,.7],materials.rug);
+  const sofa=new THREE.Group(); room.add(sofa);
+  box([4.4,.48,1.18],[-1.05,.54,1.2],materials.linen,[0,0,0],sofa);
+  box([4.4,1.02,.28],[-1.05,1.14,1.65],materials.linen,[-.08,0,0],sofa);
+  box([1.45,.48,2.4],[-2.55,.54,.62],materials.linen,[0,0,0],sofa);
+  box([.25,.78,1.25],[1.15,.72,1.2],materials.linen,[0,0,0],sofa);
+  for(const [x,c] of [[-1.8,materials.olive],[-.65,materials.ceramic],[.35,materials.linen]]) box([.8,.52,.18],[x,1.35,1.52],c,[-.12,.03,0],sofa);
+  cylinder(1.05,.19,[.15,.52,-.25],materials.timber2,compact?20:40);
+  cylinder(.13,.46,[.15,.25,-.25],materials.black,16);
 
-  box('tv-panel', [3.2, 2.45, 0.25], [-2.95, 2.35, -3.68], materials.accent);
-  box('tv', [2.35, 1.35, 0.1], [-2.95, 2.55, -3.5], new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.15, metalness: 0.15 }));
-  box('console', [3.4, 0.42, 0.7], [-2.75, 0.55, -3.18], materials.floor);
-
-  box('sofa-seat', [4.2, 0.55, 1.35], [-0.25, 0.68, 1.25], materials.sofa);
-  box('sofa-back', [4.2, 1.15, 0.38], [-0.25, 1.38, 1.82], materials.sofa, [-0.08, 0, 0]);
-  box('sofa-arm-left', [0.35, 0.85, 1.45], [-2.35, 0.9, 1.25], materials.sofa);
-  box('sofa-arm-right', [0.35, 0.85, 1.45], [1.85, 0.9, 1.25], materials.sofa);
-  box('cushion-a', [0.92, 0.5, 0.18], [-1.1, 1.55, 1.58], materials.fabric, [-0.14, 0.08, -0.06]);
-  box('cushion-b', [0.92, 0.5, 0.18], [0.35, 1.55, 1.58], materials.accent, [-0.14, -0.06, 0.04]);
-
-  box('rug', [5.3, 0.04, 3.5], [0.15, 0.03, 0.05], new THREE.MeshStandardMaterial({ color: 0xc5b7a0, roughness: 1 }));
-  box('coffee-table-top', [2.4, 0.16, 1.05], [0.1, 0.55, -0.1], materials.floor);
-  box('coffee-leg-a', [0.12, 0.5, 0.12], [-0.85, 0.28, -0.45], materials.metal);
-  box('coffee-leg-b', [0.12, 0.5, 0.12], [1.05, 0.28, 0.25], materials.metal);
-
-  box('shelf', [1.15, 3.2, 0.45], [4.25, 1.7, -3.45], materials.accent);
-  for (let y = 0.45; y < 3.1; y += 0.78) {
-    box(`shelf-${y}`, [1.05, 0.08, 0.55], [4.25, y, -3.2], materials.metal);
+  // Dining zone and pendants.
+  box([3.5,.18,1.28],[.8,.78,-2.8],materials.timber2);
+  for(const x of [-.55,2.15]) for(const z of [-3.25,-2.35]) box([.1,.74,.1],[x,.39,z],materials.black);
+  const chairPositions=[[-.25,-2.0],[.85,-2.0],[1.95,-2.0],[-.25,-3.62],[.85,-3.62],[1.95,-3.62]];
+  chairPositions.forEach(([x,z],i)=>{box([.62,.12,.62],[x,.52,z],materials.olive);box([.62,.75,.12],[x,.9,z+(i<3?.28:-.28)],materials.timber,[i<3?-.08:.08,0,0]);});
+  for(const x of [.15,1.45]){
+    box([.025,1.55,.025],[x,4.48,-2.78],materials.black);
+    const shade=new THREE.Mesh(new THREE.ConeGeometry(.48,.35,compact?20:36,1,true),materials.black);shade.position.set(x,3.72,-2.78);shade.rotation.x=Math.PI;room.add(shade);
+  }
+  // Art, console and planting.
+  box([1.35,1.7,.09],[-4.45,2.65,-3.91],materials.brass);
+  box([1.18,1.52,.07],[-4.45,2.65,-3.82],mat(0xada088,1));
+  box([1.8,.16,.46],[-3.95,.72,-3.55],materials.timber);
+  const planter=cylinder(.42,.72,[3.65,.36,-3.25],materials.ceramic,20);
+  for(let i=0;i<(compact?7:11);i++){
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(.28,compact?10:16,8),materials.leaf);
+    const a=i*2.2;leaf.scale.set(.48,1.35,.25);leaf.position.set(3.65+Math.cos(a)*.32,1.0+(i%4)*.28,-3.25+Math.sin(a)*.24);leaf.rotation.z=Math.sin(a)*.7;room.add(leaf);
   }
 
-  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.42, 0.12, 32), materials.metal);
-  lampBase.position.set(3.35, 0.08, 1.85);
-  lampBase.castShadow = true;
-  room.add(lampBase);
-  box('lamp-stem', [0.08, 2.35, 0.08], [3.35, 1.23, 1.85], materials.metal);
-  const shade = new THREE.Mesh(new THREE.ConeGeometry(0.72, 0.85, 32, 1, true), materials.fabric);
-  shade.position.set(3.35, 2.45, 1.85);
-  shade.rotation.x = Math.PI;
-  shade.castShadow = true;
-  room.add(shade);
+  const hemi=new THREE.HemisphereLight(0xf7e5c8,0x2b241d,1.45);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xffecd1,3.15);sun.position.set(6,7,6);sun.castShadow=!compact;
+  if(!compact){sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-8;sun.shadow.camera.right=8;sun.shadow.camera.top=8;sun.shadow.camera.bottom=-8;}scene.add(sun);
+  const ambient=new THREE.PointLight(0xffb979,compact?8:14,12,2);ambient.position.set(.6,4.3,-2.2);scene.add(ambient);
+  const windowLight=new THREE.RectAreaLight(0xcce3ff,compact?5:8,3.5,4);windowLight.position.set(4.2,2.7,-2.9);windowLight.lookAt(0,1,0);scene.add(windowLight);
 
-  const planter = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.75, 24), materials.accent);
-  planter.position.set(-4.15, 0.37, -2.85);
-  planter.castShadow = true;
-  room.add(planter);
-  for (let i = 0; i < 7; i += 1) {
-    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.34, 16, 10), materials.green);
-    const angle = (i / 7) * Math.PI * 2;
-    leaf.scale.set(0.48, 1.15, 0.25);
-    leaf.position.set(-4.15 + Math.cos(angle) * 0.28, 1.05 + (i % 3) * 0.22, -2.85 + Math.sin(angle) * 0.2);
-    leaf.rotation.z = angle * 0.45;
-    leaf.castShadow = true;
-    room.add(leaf);
+  let targetPosition=new THREE.Vector3().fromArray(views.living.camera);
+  let targetLook=new THREE.Vector3().fromArray(views.living.target);
+  let guided=true;
+  function chooseView(key){
+    const view=views[key]; if(!view)return; guided=true; controls.enabled=false;
+    targetPosition.fromArray(view.camera);targetLook.fromArray(view.target);status.textContent=view.copy;
+    const keys=Object.keys(views),index=keys.indexOf(key);
+    count.textContent=`0${index+1} / 03`;progress.style.width=`${(index+1)*33.333}%`;
+    document.querySelectorAll('.viewpoint').forEach(button=>{const active=button.dataset.view===key;button.classList.toggle('active',active);button.querySelector('small').textContent=active?'Current view':'View →';});
   }
+  document.querySelectorAll('.viewpoint').forEach(button=>button.addEventListener('click',()=>chooseView(button.dataset.view)));
+  document.querySelectorAll('[data-room-light]').forEach(button=>button.addEventListener('click',()=>{
+    const evening=button.dataset.roomLight==='evening';document.querySelectorAll('[data-room-light]').forEach(item=>item.classList.toggle('active',item===button));
+    scene.background.set(evening?0x111522:0x28241d);scene.fog.color.copy(scene.background);renderer.toneMappingExposure=evening?.72:1.05;
+    hemi.intensity=evening?.3:1.45;sun.intensity=evening?.18:3.15;ambient.intensity=evening?(compact?52:72):(compact?8:14);windowLight.intensity=evening?1.2:(compact?5:8);
+    status.textContent=evening?'Evening · warm pendants soften the material palette.':views[document.querySelector('.viewpoint.active')?.dataset.view||'living'].copy;
+  }));
+  renderer.domElement.addEventListener('pointerdown',()=>{guided=false;controls.enabled=true;},{passive:true});
 
-  const hemi = new THREE.HemisphereLight(0xf3eadc, 0x3f352d, 1.55);
-  scene.add(hemi);
-
-  const sun = new THREE.DirectionalLight(0xffe4bc, 4.2);
-  sun.position.set(4, 7, 6);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.left = -8;
-  sun.shadow.camera.right = 8;
-  sun.shadow.camera.top = 8;
-  sun.shadow.camera.bottom = -8;
-  scene.add(sun);
-
-  const interiorLight = new THREE.PointLight(0xffc882, 42, 11, 2);
-  interiorLight.position.set(-0.3, 4.5, 0.5);
-  interiorLight.castShadow = true;
-  scene.add(interiorLight);
-
-  const lampLight = new THREE.PointLight(0xffb86c, 18, 5.5, 2);
-  lampLight.position.set(3.35, 2.2, 1.85);
-  scene.add(lampLight);
-
-  let lightingMode = 'day';
-
-  function applyLighting(mode) {
-    lightingMode = mode;
-    if (mode === 'day') {
-      scene.fog.color.set(0x151511);
-      renderer.toneMappingExposure = 1.08;
-      hemi.intensity = 1.55;
-      sun.intensity = 4.2;
-      interiorLight.intensity = 18;
-      lampLight.intensity = 8;
-      glass.material.color.set(0xdde8eb);
-      status.textContent = 'Daylight reveals the warmth of wood, stone and layered neutral finishes.';
-    } else {
-      scene.fog.color.set(0x090b12);
-      renderer.toneMappingExposure = 0.78;
-      hemi.intensity = 0.38;
-      sun.intensity = 0.35;
-      interiorLight.intensity = 54;
-      lampLight.intensity = 36;
-      glass.material.color.set(0x213453);
-      status.textContent = 'Evening mode shifts the room into a softer, intimate atmosphere.';
-    }
-  }
-
-  function applyMaterialSet(key) {
-    const set = materialSets[key];
-    if (!set) return;
-    materials.wall.color.setHex(set.wall);
-    materials.floor.color.setHex(set.floor);
-    materials.sofa.color.setHex(set.sofa);
-    materials.accent.color.setHex(set.accent);
-    materials.metal.color.setHex(set.metal);
-    status.textContent = key === 'warm'
-      ? 'Warm contemporary combines natural timber, soft upholstery and calm neutral tones.'
-      : key === 'minimal'
-        ? 'Soft minimal reduces contrast and lets proportion, daylight and texture lead.'
-        : 'Modern luxe deepens the palette with darker timber, richer upholstery and brass detail.';
-  }
-
-  document.querySelectorAll('[data-room-material]').forEach((button) => {
-    button.addEventListener('click', () => {
-      document.querySelectorAll('[data-room-material]').forEach((item) => item.classList.remove('active'));
-      button.classList.add('active');
-      applyMaterialSet(button.dataset.roomMaterial);
-    });
-  });
-
-  document.querySelectorAll('[data-room-light]').forEach((button) => {
-    button.addEventListener('click', () => {
-      document.querySelectorAll('[data-room-light]').forEach((item) => item.classList.remove('active'));
-      button.classList.add('active');
-      applyLighting(button.dataset.roomLight);
-    });
-  });
-
-  document.querySelectorAll('.room-hotspot').forEach((button) => {
-    button.addEventListener('click', () => {
-      const messages = {
-        lighting: 'Layered lighting balances natural daylight, ambient warmth and focused task light.',
-        storage: 'Integrated storage keeps the architecture visually calm while supporting everyday routines.',
-        comfort: 'Proportion, circulation and furniture depth are considered before finishes are selected.'
-      };
-      status.textContent = messages[button.dataset.hotspot];
-    });
-  });
-
-  const resize = () => {
-    const width = stage.clientWidth;
-    const height = stage.clientHeight;
-    camera.aspect = width / Math.max(height, 1);
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height, false);
-  };
-
-  const resizeObserver = new ResizeObserver(resize);
-  resizeObserver.observe(stage);
-  resize();
-
-  let visible = true;
-  const observer = new IntersectionObserver(([entry]) => {
-    visible = entry.isIntersecting;
-  }, { threshold: 0.05 });
-  observer.observe(stage);
-
-  const clock = new THREE.Clock();
-  const render = () => {
-    requestAnimationFrame(render);
-    if (!visible) return;
-    const elapsed = clock.getElapsedTime();
-    if (!motionQuery.matches) {
-      shade.rotation.y = Math.sin(elapsed * 0.32) * 0.018;
-      interiorLight.intensity += (lightingMode === 'day' ? 18 : 54) - interiorLight.intensity > 0.1 ? 0.015 : 0;
-    }
-    controls.update();
-    renderer.render(scene, camera);
-  };
-
-  render();
+  function resize(){const w=stage.clientWidth,h=stage.clientHeight;camera.aspect=w/Math.max(h,1);camera.updateProjectionMatrix();renderer.setSize(w,h,false);}
+  const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(stage);resize();
+  let visible=true;const visibilityObserver=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting},{threshold:.02});visibilityObserver.observe(stage);
+  const tick=()=>{requestAnimationFrame(tick);if(!visible)return;if(guided&&!reducedMotion){camera.position.lerp(targetPosition,.045);controls.target.lerp(targetLook,.045);if(camera.position.distanceTo(targetPosition)<.035){guided=false;controls.enabled=true;}}controls.update();renderer.render(scene,camera)};
+  tick();
   loader?.classList.add('ready');
-
-  stage.addEventListener('pointerdown', () => {
-    controls.autoRotate = false;
-  }, { once: true });
-
-  window.addEventListener('pagehide', () => {
-    resizeObserver.disconnect();
-    observer.disconnect();
-    controls.dispose();
-    renderer.dispose();
-  }, { once: true });
+  setTimeout(() => loader?.remove(), 750);
+  addEventListener('pagehide',()=>{resizeObserver.disconnect();visibilityObserver.disconnect();controls.dispose();renderer.dispose();},{once:true});
 }
