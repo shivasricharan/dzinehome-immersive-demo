@@ -169,8 +169,13 @@ p { line-height: 1.65; }
 .project-tile img { height: 100%; object-fit: cover; transition: transform .7s ease; }
 .project-tile:hover img { transform: scale(1.035); }
 
-.horizontal-showcase { height: 100vh; overflow: hidden; }
-.horizontal-track { height: 100%; width: max-content; display: flex; align-items: center; gap: 6vw; padding: 0 6vw; }
+.horizontal-showcase { position: relative; min-height: 100vh; overflow: hidden; padding: 12vh 0 9vh; }
+.horizontal-track { width: 100%; display: flex; align-items: center; gap: 5vw; padding: 0 6vw 24px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.horizontal-track::-webkit-scrollbar { display: none; }
+.horizontal-track > article { scroll-snap-align: start; }
+.showcase-controls { position: absolute; z-index: 3; right: 6vw; top: 6vh; display: flex; align-items: center; gap: 14px; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; }
+.showcase-controls button { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: transparent; color: white; cursor: pointer; transition: background .2s ease, color .2s ease; }
+.showcase-controls button:hover { background: white; color: var(--ink); }
 .showcase-intro { width: min(72vw, 850px); flex: 0 0 auto; }
 .showcase-intro p:last-child { max-width: 520px; color: rgba(255,255,255,.7); margin-top: 30px; }
 .showcase-card { width: min(42vw, 590px); flex: 0 0 auto; }
@@ -201,9 +206,16 @@ p { line-height: 1.65; }
 .consultation-panel { display: flex; flex-direction: column; justify-content: center; padding: 8vw 6vw; }
 .consultation-panel h2 { font-size: clamp(2.8rem, 5vw, 6rem); }
 .consultation-panel > p:last-of-type { max-width: 520px; color: rgba(255,255,255,.7); margin: 28px 0; }
-.brief-options { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
-.brief-options button { border: 1px solid var(--light-line); color: white; background: transparent; padding: 11px 16px; cursor: pointer; }
-.brief-options button.selected { background: white; color: var(--ink); }
+.consultation-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 620px; }
+.consultation-form label { display: grid; gap: 8px; }
+.consultation-form label span { font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.62); }
+.consultation-form input,.consultation-form select { width: 100%; min-height: 50px; border: 1px solid var(--light-line); border-radius: 0; padding: 0 14px; background: rgba(255,255,255,.05); color: white; font: inherit; }
+.consultation-form select { color-scheme: dark; }
+.consultation-form .primary-button { grid-column: 1/-1; border: 0; justify-content: space-between; cursor: pointer; }
+.form-success { max-width: 560px; padding: 26px 0; border-top: 1px solid var(--light-line); border-bottom: 1px solid var(--light-line); }
+.form-success strong { font-size: 1.35rem; }
+.form-success p { color: rgba(255,255,255,.68); }
+.form-success a { display: inline-flex; gap: 18px; padding-bottom: 4px; border-bottom: 1px solid currentColor; }
 
 .site-footer { background: #0b0b0a; color: white; padding: 7vw 6vw 3vw; display: grid; grid-template-columns: 1fr 1fr; gap: 35px; align-items: end; }
 .footer-brand { font-family: 'Manrope'; font-size: clamp(3.5rem, 8vw, 9rem); letter-spacing: -.06em; }
@@ -260,6 +272,8 @@ p { line-height: 1.65; }
   .showcase-card h3 { margin-top: 8px; }
   .process-item { grid-template-columns: 40px 1fr; gap: 10px 18px; }
   .consultation-panel { padding: 20vw 6vw; }
+  .consultation-form { grid-template-columns: 1fr; }
+  .consultation-form .primary-button { grid-column: auto; }
   .site-footer { padding: 18vw 6vw 8vw; }
   .footer-links { flex-wrap: wrap; }
 }

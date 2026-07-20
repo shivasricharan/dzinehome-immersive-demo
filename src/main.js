@@ -124,7 +124,7 @@ app.innerHTML = `
       </div>
     </section>
 
-    <section id="projects" class="project-story section-light">
+    <section id="project-overview" class="project-story section-light">
       <div class="project-heading reveal">
         <div>
           <p class="section-label">Selected residence</p>
@@ -150,11 +150,16 @@ app.innerHTML = `
       </div>
     </section>
 
-    <section class="horizontal-showcase section-dark">
+    <section id="projects" class="horizontal-showcase section-dark" aria-labelledby="showcase-title">
+      <div class="showcase-controls" aria-label="Project gallery controls">
+        <button type="button" data-gallery-direction="previous" aria-label="Previous project">←</button>
+        <span>Explore projects</span>
+        <button type="button" data-gallery-direction="next" aria-label="Next project">→</button>
+      </div>
       <div class="horizontal-track">
         <article class="showcase-intro">
           <p class="section-label">More than one way to live</p>
-          <h2>Different homes.<br>One standard of care.</h2>
+          <h2 id="showcase-title">Different homes.<br>One standard of care.</h2>
           <p>From refined apartments to expansive villas, each project begins with the people who will live there.</p>
         </article>
         <article class="showcase-card">
@@ -208,13 +213,19 @@ app.innerHTML = `
       <div class="consultation-panel reveal">
         <p class="section-label">Your home story starts here</p>
         <h2>Tell us what you are imagining.</h2>
-        <p>This concept demonstrates how a future Dzinehome experience can understand the customer before the first consultation.</p>
-        <div class="brief-options" aria-label="Example home brief options">
-          <button type="button">Apartment</button>
-          <button type="button">Villa</button>
-          <button type="button">Office</button>
+        <p>Share a few details and create a useful starting brief for the first design conversation.</p>
+        <form class="consultation-form" id="consultation-form">
+          <label><span>Your name</span><input name="name" autocomplete="name" required placeholder="Name"></label>
+          <label><span>Phone number</span><input name="phone" autocomplete="tel" inputmode="tel" required placeholder="Phone"></label>
+          <label><span>Property type</span><select name="property" required><option value="">Choose one</option><option>Apartment</option><option>Villa</option><option>Office</option></select></label>
+          <label><span>Preferred timeline</span><select name="timeline" required><option value="">Choose one</option><option>Within 3 months</option><option>3–6 months</option><option>6–12 months</option><option>Exploring</option></select></label>
+          <button class="primary-button light" type="submit">Create my home brief <span aria-hidden="true">→</span></button>
+        </form>
+        <div class="form-success" id="form-success" role="status" aria-live="polite" hidden>
+          <strong>Your starting brief is ready.</strong>
+          <p id="brief-summary"></p>
+          <a href="https://dzinehome.in/contact-us/" target="_blank" rel="noreferrer">Continue to Dzinehome contact <span aria-hidden="true">↗</span></a>
         </div>
-        <a class="primary-button light" href="https://dzinehome.in/contact-us/" target="_blank" rel="noreferrer">Start a conversation <span aria-hidden="true">↗</span></a>
       </div>
     </section>
   </main>
@@ -236,6 +247,13 @@ const lenis = new Lenis({
   smoothWheel: true,
   wheelMultiplier: 0.9
 });
+
+const syncHashPosition = () => {
+  if (!window.location.hash || !document.querySelector(window.location.hash)) return;
+  lenis.scrollTo(window.location.hash, { immediate: true, offset: -64 });
+};
+window.addEventListener('hashchange', syncHashPosition);
+window.requestAnimationFrame(syncHashPosition);
 
 lenis.on('scroll', ScrollTrigger.update);
 gsap.ticker.add((time) => lenis.raf(time * 1000));
@@ -310,19 +328,12 @@ gsap.from('.project-tile', {
   }
 });
 
-const horizontalSection = document.querySelector('.horizontal-showcase');
 const horizontalTrack = document.querySelector('.horizontal-track');
-const horizontalTween = gsap.to(horizontalTrack, {
-  x: () => -(horizontalTrack.scrollWidth - window.innerWidth),
-  ease: 'none',
-  scrollTrigger: {
-    trigger: horizontalSection,
-    start: 'top top',
-    end: () => `+=${horizontalTrack.scrollWidth - window.innerWidth}`,
-    scrub: 1,
-    pin: true,
-    invalidateOnRefresh: true
-  }
+document.querySelectorAll('[data-gallery-direction]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const direction = button.dataset.galleryDirection === 'next' ? 1 : -1;
+    horizontalTrack.scrollBy({ left: direction * Math.min(window.innerWidth * .78, 920), behavior: 'smooth' });
+  });
 });
 
 const styleImage = document.querySelector('#style-image');
@@ -355,18 +366,30 @@ styleTabs.forEach((tab) => {
   });
 });
 
-document.querySelectorAll('.brief-options button').forEach((button) => {
-  button.addEventListener('click', () => {
-    document.querySelectorAll('.brief-options button').forEach((item) => item.classList.remove('selected'));
-    button.classList.add('selected');
-  });
+const consultationForm = document.querySelector('#consultation-form');
+const formSuccess = document.querySelector('#form-success');
+consultationForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const data = new FormData(consultationForm);
+  const property = String(data.get('property')).toLowerCase();
+  const article = /^[aeiou]/.test(property) ? 'an' : 'a';
+  document.querySelector('#brief-summary').textContent = `${data.get('name')} is planning ${article} ${property} project with a ${String(data.get('timeline')).toLowerCase()} timeline. Dzinehome can continue this conversation with the right context.`;
+  consultationForm.hidden = true;
+  formSuccess.hidden = false;
+});
+
+document.addEventListener('click', (event) => {
+  const trigger = event.target.closest('[data-open-consultation]');
+  if (!trigger) return;
+  event.preventDefault();
+  document.querySelector('#consultation-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  window.setTimeout(() => document.querySelector('#consultation-form input')?.focus({ preventScroll: true }), 700);
 });
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 if (reducedMotion.matches) {
   lenis.destroy();
   ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-  horizontalTween.kill();
 }
 
 window.addEventListener('load', () => ScrollTrigger.refresh());

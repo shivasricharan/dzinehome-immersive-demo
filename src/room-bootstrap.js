@@ -14,6 +14,7 @@ const roomMarkup = `
         </div>
         <div class="room-tour" aria-label="Guided tour progress"><span>Guided tour</span><b id="tour-count">01 / 03</b><i><em id="tour-progress"></em></i></div>
         <div class="room-hint" aria-hidden="true"><span class="room-hint-icon">↔</span>Drag to look around</div>
+        <button class="room-photo-button" type="button" data-project-photo="0">View project photos <span aria-hidden="true">↗</span></button>
       </div>
 
       <aside class="room-panel">
@@ -42,17 +43,22 @@ const roomMarkup = `
             </div>
           </div>
           <p class="room-status" id="room-status" aria-live="polite">Living room · layered timber, linen and warm terracotta.</p>
-          <a class="room-cta" href="#consultation">Discuss your home <span aria-hidden="true">→</span></a>
+          <a class="room-cta" href="#consultation" data-open-consultation>Discuss your home <span aria-hidden="true">→</span></a>
         </div>
       </aside>
 
       <div class="room-reference">
         <div class="reference-note"><span>Reference imagery</span><p>From the 212 NSL Residence project</p></div>
         <div class="reference-filmstrip">
-          ${references.map(([src, alt]) => `<figure><img src="${src}" alt="${alt}" loading="lazy"></figure>`).join('')}
+          ${references.map(([src, alt], index) => `<button type="button" data-project-photo="${index}" aria-label="Open ${alt}"><img src="${src}" alt="${alt}" loading="lazy"><span>Reference</span></button>`).join('')}
         </div>
       </div>
     </div>
+    <dialog class="project-lightbox" id="project-lightbox" aria-labelledby="lightbox-title">
+      <button class="lightbox-close" type="button" aria-label="Close project photos">×</button>
+      <div class="lightbox-media"><img id="lightbox-image" src="${references[0][0]}" alt="${references[0][1]}"></div>
+      <div class="lightbox-caption"><div><span>212 NSL Residence</span><strong id="lightbox-title">Real project reference</strong></div><b id="lightbox-count">01 / 03</b><div class="lightbox-nav"><button type="button" data-lightbox-direction="previous" aria-label="Previous photo">←</button><button type="button" data-lightbox-direction="next" aria-label="Next photo">→</button></div></div>
+    </dialog>
   </section>
 `;
 
@@ -64,7 +70,29 @@ if (existingStory) {
   const stage = document.querySelector('#room-stage');
   const loader = stage?.querySelector('.room-loader');
   const fallback = stage?.querySelector('.room-fallback');
+  const lightbox = document.querySelector('#project-lightbox');
+  const lightboxImage = document.querySelector('#lightbox-image');
+  const lightboxCount = document.querySelector('#lightbox-count');
+  let activePhoto = 0;
   let started = false;
+
+  const showPhoto = (index) => {
+    activePhoto = (index + references.length) % references.length;
+    const [src, alt] = references[activePhoto];
+    lightboxImage.src = src;
+    lightboxImage.alt = alt;
+    lightboxCount.textContent = `0${activePhoto + 1} / 0${references.length}`;
+  };
+
+  document.querySelectorAll('[data-project-photo]').forEach((button) => button.addEventListener('click', () => {
+    showPhoto(Number(button.dataset.projectPhoto));
+    lightbox?.showModal();
+  }));
+  document.querySelectorAll('[data-lightbox-direction]').forEach((button) => button.addEventListener('click', () => {
+    showPhoto(activePhoto + (button.dataset.lightboxDirection === 'next' ? 1 : -1));
+  }));
+  document.querySelector('.lightbox-close')?.addEventListener('click', () => lightbox?.close());
+  lightbox?.addEventListener('click', (event) => { if (event.target === lightbox) lightbox.close(); });
 
   const startRoom = async () => {
     if (started) return;
@@ -83,7 +111,7 @@ if (existingStory) {
     if (!entry.isIntersecting) return;
     preload.disconnect();
     startRoom();
-  }, { rootMargin: '700px 0px' });
+  }, { rootMargin: '1800px 0px' });
 
   if (stage) preload.observe(stage);
 }
